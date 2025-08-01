@@ -5,9 +5,9 @@ from email.mime.text import MIMEText
 import time
 
 # === CONFIGURATION ===
-API_KEY = "a9badbfcc033516c940caa12ca5705ca"  # Your API key
-EMAIL_ADDRESS = "gregory.mwangi3@gmail.com"   # Your email
-EMAIL_PASSWORD = "qwdidcxpnknfeasv"           # Gmail app password
+API_KEY = "API_KEY"  # Your API key
+EMAIL_ADDRESS = "Your email"   # Your email
+EMAIL_PASSWORD = "Gmail app password"           # Gmail app password
 
 LEAGUES = {
     "Premier League": 39,
