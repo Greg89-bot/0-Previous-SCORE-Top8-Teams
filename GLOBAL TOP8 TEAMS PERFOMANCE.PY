@@ -11,16 +11,10 @@ from email.mime.multipart import MIMEMultipart
 # ======================
 API_KEY = "a9badbfcc033516c940caa12ca5705ca"  # Your API key
 EMAIL_ADDRESS = "gregory.mwangi3@gmail.com"   # Your email
-EMAIL_PASSWORD = "bvvibaknyysmthww"           # Your App password
+EMAIL_PASSWORD = "gmabsistfpiksqbi"           # Your App password
 BASE_URL = "https://v3.football.api-sports.io"
 SEASON = datetime.now().year
 HEADERS = {"x-apisports-key": API_KEY}
-=======
-# === CONFIGURATION ===
-API_KEY = "API_KEY"  # Your API key
-EMAIL_ADDRESS = "Your email"   # Your email
-EMAIL_PASSWORD = "Gmail app password"           # Gmail app password
-
 
 # Date setup
 today = datetime.now().date()
@@ -73,7 +67,39 @@ LEAGUES = {
 
     # Additional Americas Leagues
     "Liga Profesional (Colombia)": 239, "Primera Division (Chile)": 239,
-    "Liga 1 (Peru)": 239, "Liga Pro (Ecuador)": 239
+    "Liga 1 (Peru)": 239, "Liga Pro (Ecuador)": 239,
+    #Others
+    # Top-Tier Leagues (Tier 1)
+    "Czech First League": 319,  # Czech Republic
+    "Slovak Super Liga": 333,  # Slovakia
+    "Hungarian NB I": 218,  # Hungary (same as Austrian Bundesliga, verify API)
+    "Croatian HNL": 203,  # Croatia (same as Turkish Süper Lig, verify API)
+    "Serbian SuperLiga": 239,  # Serbia (shared code, verify)
+    "Romanian Liga I": 239,  # Romania (shared code, verify)
+    "Bulgarian First League": 239,  # Bulgaria (shared code, verify)
+    "Icelandic Úrvalsdeild": 239,  # Iceland (shared code, verify)
+    "Latvian Higher League": 239,  # Latvia (shared code, verify)
+    "Lithuanian A Lyga": 239,  # Lithuania (shared code, verify)
+    "Luxembourg National Division": 239,  # Luxembourg (shared code, verify)
+    "Maltese Premier League": 239,  # Malta (shared code, verify)
+
+    # Second Divisions (Tier 2)
+    "Czech National Football League": 239,  # Czech D2
+    "Slovak 2. Liga": 239,  # Slovakia D2
+    "Hungarian NB II": 239,  # Hungary D2
+    "Druga HNL (Croatia)": 239,  # Croatia D2
+    "Serbian PrvaLiga": 239,  # Serbia D2
+    # North America
+    "Canadian Premier League": 254,  # Canada (same as USL Championship, verify)
+    "Liga MX Expansion": 263,  # Mexico D2 (same as Liga Premier)
+    "Liga de Ascenso (Costa Rica)": 239,  # Costa Rica D1
+
+    # South America
+    "Primera B (Argentina)": 239,  # Argentina D2
+    "Campeonato Brasileiro Série D": 74,  # Brazil D4
+    "Primera B (Chile)": 239,  # Chile D2
+    "Copa Paraguay": 239,  # Paraguay Cup
+    "Liga BetPlay Dimayor (Colombia)": 239,  # Colombia D1 (shared code)
 }
 
 # ======================
