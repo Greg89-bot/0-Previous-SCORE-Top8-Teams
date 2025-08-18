@@ -5,6 +5,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+
 # ======================
 # CONFIGURATION
 # ======================
@@ -14,6 +15,12 @@ EMAIL_PASSWORD = "bvvibaknyysmthww"           # Your App password
 BASE_URL = "https://v3.football.api-sports.io"
 SEASON = datetime.now().year
 HEADERS = {"x-apisports-key": API_KEY}
+=======
+# === CONFIGURATION ===
+API_KEY = "API_KEY"  # Your API key
+EMAIL_ADDRESS = "Your email"   # Your email
+EMAIL_PASSWORD = "Gmail app password"           # Gmail app password
+
 
 # Date setup
 today = datetime.now().date()
