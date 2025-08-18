@@ -1,111 +1,210 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 import smtplib
 from email.mime.text import MIMEText
-import time
+from email.mime.multipart import MIMEMultipart
 
-# === CONFIGURATION ===
+# ======================
+# CONFIGURATION
+# ======================
 API_KEY = "a9badbfcc033516c940caa12ca5705ca"  # Your API key
 EMAIL_ADDRESS = "gregory.mwangi3@gmail.com"   # Your email
-EMAIL_PASSWORD = "qwdidcxpnknfeasv"           # Gmail app password
+EMAIL_PASSWORD = "bvvibaknyysmthww"           # Your App password
+BASE_URL = "https://v3.football.api-sports.io"
+SEASON = datetime.now().year
+HEADERS = {"x-apisports-key": API_KEY}
 
+# Date setup
+today = datetime.now().date()
+tomorrow = today + timedelta(days=1)
+
+# ======================
+# LEAGUE SELECTION (40+ leagues)
+# ======================
 LEAGUES = {
-    "Premier League": 39,
-    "Serie A": 135,
-    "Bundesliga": 78,
-    "La Liga": 140,
-    "Ligue 1": 61,
-    "Primeira Liga": 94,
+    # Top European Leagues (Tier 1)
+    "Premier League": 39, "Serie A": 135, "Bundesliga": 78,
+    "La Liga": 140, "Ligue 1": 61, "Primeira Liga": 94,
+    "Eredivisie": 88, "Belgian Pro League": 144,
+    "Scottish Premiership": 179, "Turkish Süper Lig": 203,
+    "Russian Premier League": 235, "Ukrainian Premier League": 332,
+    "Austrian Bundesliga": 218, "Danish Superliga": 119,
+    "Swiss Super League": 207, "Norwegian Eliteserien": 113,
+    "Swedish Allsvenskan": 129, "Finnish Veikkausliiga": 106,
+    "Polish Ekstraklasa": 106, "Greek Super League": 197,
+
+    # Second Divisions (Tier 2)
+    "Championship": 40, "Serie B": 136, "2. Bundesliga": 79,
+    "La Liga 2": 141, "Ligue 2": 62, "Challenger Pro League": 145,
+    "Segunda Liga": 95, "Eerste Divisie": 89,
+    "Scottish Championship": 180, "TFF First League": 204,
+    "RFNL (Russia)": 236, "Liga 2 (Romania)": 239,
+    "Super League Greece 2": 197, "Liga Portugal 2": 95,
+    "Serie B (Brazil)": 72, "USL Championship (USA)": 254,
+
+    # Third Divisions (Tier 3)
+    "League One": 41, "Serie C": 137, "3. Liga": 80,
+    "Primera RFEF": 142, "National": 63, "Scottish League One": 181,
+    "Liga 3 (Portugal)": 96, "Serie C (Brazil)": 73,
+    "USL League One (USA)": 255, "Liga Premier (Mexico)": 263,
+
+    # Other Notable Leagues
+    "MLS": 253, "Liga MX": 262, "Brazilian Serie A": 71,
+    "Argentine Primera Division": 128, "Saudi Pro League": 239,
+    "J1 League": 98, "Chinese Super League": 169,
+    "A-League (Australia)": 1, "K League 1 (South Korea)": 292,
+
+    # Additional European Lower Leagues
+    "League Two": 42, "Serie D": 137, "Regionalliga": 81,
+    "Serie D (Italy)": 138, "Nationwide Division (Greece)": 198,
+    "Liga 3 (Spain)": 143, "Liga 3 (Germany)": 82,
+
+    # Scandinavian Lower Leagues
+    "1. Division (Denmark)": 120, "Superettan (Sweden)": 130,
+    "OBOS-ligaen (Norway)": 114, "Ykkönen (Finland)": 107,
+
+    # Additional Americas Leagues
+    "Liga Profesional (Colombia)": 239, "Primera Division (Chile)": 239,
+    "Liga 1 (Peru)": 239, "Liga Pro (Ecuador)": 239
 }
 
-HEADERS = {
-    "x-apisports-key": API_KEY
-}
+# ======================
+# CORE FUNCTIONS
+# ======================
 
-today = datetime.today()
-report_date = today.strftime('%d %B %Y')
-
-# === FUNCTIONS ===
 def get_top_8_teams(league_id):
-    url = f"https://v3.football.api-sports.io/standings?league={league_id}&season=2023"
-    res = requests.get(url, headers=HEADERS)
-    json_data = res.json()
-    if 'response' not in json_data or not json_data['response']:
-        raise Exception(f"Error fetching standings: {json_data}")
-    standings = json_data['response'][0]['league']['standings'][0]
-    top_teams = standings[:8]
-    return [team['team']['id'] for team in top_teams], {team['team']['id']: team['team']['name'] for team in top_teams}
+    url = f"{BASE_URL}/standings?league={league_id}&season={SEASON}"
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=10)
+        data = response.json()
+        if data.get("response"):
+            standings = data["response"][0]["league"]["standings"][0][:8]
+            return {team["team"]["id"]: team["team"]["name"] for team in standings}
+    except Exception as e:
+        print(f"⚠️ Error getting standings for league {league_id}: {str(e)}")
+    return {}
 
 def get_last_2_matches(team_id):
-    url = f"https://v3.football.api-sports.io/fixtures?team={team_id}&season=2023&status=FT"
-    res = requests.get(url, headers=HEADERS)
-    json_data = res.json()
-    if 'response' not in json_data or not json_data['response']:
-        raise Exception(f"Error fetching fixtures: {json_data}")
-    return sorted(json_data['response'], key=lambda x: x['fixture']['date'], reverse=True)[:2]
+    url = f"{BASE_URL}/fixtures?team={team_id}&last=2&status=FT"
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=10)
+        return response.json().get("response", [])
+    except Exception as e:
+        print(f"⚠️ Error getting matches for team {team_id}: {str(e)}")
+    return []
 
-def get_zero_goal_match_info(matches, team_id):
-    zero_goal_info = []
-    for match in matches:
-        is_home = match['teams']['home']['id'] == team_id
-        opponent = match['teams']['away']['name'] if is_home else match['teams']['home']['name']
-        goals_for = match['goals']['home'] if is_home else match['goals']['away']
-        goals_against = match['goals']['away'] if is_home else match['goals']['home']
-        venue = "Home" if is_home else "Away"
-        date = match['fixture']['date'][:10]
+def has_goalless_streak(matches, team_id):
+    if len(matches) < 2:
+        return False
+    return all(
+        (match["goals"]["home"] if match["teams"]["home"]["id"] == team_id else match["goals"]["away"]) == 0
+        for match in matches
+    )
 
-        if goals_for == 0:
-            zero_goal_info.append(f"{goals_for}-{goals_against} vs {opponent} ({venue}) on {date}")
-    return zero_goal_info
+def get_upcoming_match(team_id):
+    url = f"{BASE_URL}/fixtures?team={team_id}&next=1"
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=10)
+        if response.json().get("response"):
+            match = response.json()["response"][0]
+            match_date = datetime.strptime(match["fixture"]["date"][:10], "%Y-%m-%d").date()
+            if match_date in [today, tomorrow]:
+                return match
+    except Exception as e:
+        print(f"⚠️ Error getting next match for team {team_id}: {str(e)}")
+    return None
 
 def send_email(subject, body):
-    msg = MIMEText(body, "html")
-    msg["Subject"] = subject
+    """Send results via email"""
+    msg = MIMEMultipart()
     msg["From"] = EMAIL_ADDRESS
     msg["To"] = EMAIL_ADDRESS
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_ADDRESS, EMAIL_ADDRESS, msg.as_string())
+    msg["Subject"] = subject
 
-# === MAIN SCRIPT ===
-email_body = f"<h2>⚽ Football Report for {report_date}</h2>"
+    msg.attach(MIMEText(body, "plain"))
 
-for league_name, league_id in LEAGUES.items():
     try:
-        print(f"🔍 Checking {league_name}...")
-        top_ids, name_map = get_top_8_teams(league_id)
-        time.sleep(6)
-
-        no_score_teams = {}
-
-        for team_id in top_ids:
-            try:
-                matches = get_last_2_matches(team_id)
-                time.sleep(6)
-                zero_info = get_zero_goal_match_info(matches, team_id)
-                if zero_info:
-                    no_score_teams[name_map[team_id]] = zero_info
-            except Exception as e:
-                print(f"⚠️ Error fetching team {team_id}: {e}")
-
-        if no_score_teams:
-            email_body += f"<h3>{league_name}</h3><ul>"
-            for team, details in no_score_teams.items():
-                email_body += f"<li>{team}<ul>"
-                for detail in details:
-                    email_body += f"<li style='font-size:90%;color:gray'>{detail}</li>"
-                email_body += "</ul></li>"
-            email_body += "</ul>"
-
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print("\n📧 Email sent successfully!")
     except Exception as e:
-        email_body += f"<p><b>Error fetching {league_name}:</b> {e}</p>"
+        print(f"🚨 Failed to send email: {str(e)}")
 
-email_body += f"<hr><p style='font-size:small;color:gray;'>Sent by Football Script v2.0 — {report_date}</p>"
+# ======================
+# MAIN EXECUTION
+# ======================
 
-# === SEND EMAIL ===
-print("📧 Sending email...")
-send_email("⚽ Football Report - Teams That Failed to Score (Detail)", email_body)
-print("✅ Email sent successfully!")
-# Graceful exit
-import sys
-sys.exit(0)
+def main():
+    print(f"\n🔍 Scanning {len(LEAGUES)} leagues for teams with:")
+    print("- Top 8 in their league")
+    print("- 0 goals in last 2 matches")
+    print("- Playing today or tomorrow\n")
+
+    results = []
+
+    for league_name, league_id in LEAGUES.items():
+        try:
+            teams = get_top_8_teams(league_id)
+            time.sleep(1)
+
+            if not teams:
+                continue
+
+            league_results = []
+
+            for team_id, team_name in teams.items():
+                try:
+                    matches = get_last_2_matches(team_id)
+                    time.sleep(1)
+
+                    if has_goalless_streak(matches, team_id):
+                        next_match = get_upcoming_match(team_id)
+                        time.sleep(1)
+
+                        if next_match:
+                            is_home = next_match["teams"]["home"]["id"] == team_id
+                            details = {
+                                "team": team_name,
+                                "opponent": next_match["teams"]["away"]["name"] if is_home else next_match["teams"]["home"]["name"],
+                                "date": next_match["fixture"]["date"][:10],
+                                "time": next_match["fixture"]["date"][11:16],
+                                "venue": "Home" if is_home else "Away"
+                            }
+                            league_results.append(details)
+
+                except Exception as e:
+                    print(f"  ⚠️ Error processing {team_name}: {str(e)}")
+                    continue
+
+            if league_results:
+                results.append({
+                    "league": league_name,
+                    "matches": league_results
+                })
+
+        except Exception as e:
+            print(f"🚨 Error processing {league_name}: {str(e)}")
+            continue
+
+    # Build email body
+    if results:
+        email_body = "📊 MATCHES FOUND:\n\n"
+        for league in results:
+            email_body += f"🏆 {league['league']}\n"
+            for match in league["matches"]:
+                email_body += f"  🔴 {match['team']} (Last 2: 0 goals)\n"
+                email_body += f"    ⏩ {match['date']} at {match['time']} vs {match['opponent']} ({match['venue']})\n"
+            email_body += "\n"
+    else:
+        email_body = "ℹ️ No qualifying matches found."
+
+    print("\n" + email_body)
+    send_email("⚽ Football Report - Teams With 0 Goals in Last 2 Matches", email_body)
+    print(f"\n✅ Completed scan of {len(LEAGUES)} leagues")
+
+if __name__ == "__main__":
+    main()
