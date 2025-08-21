@@ -9,10 +9,6 @@ from email.mime.multipart import MIMEMultipart
 # CONFIGURATION
 # ======================
 
-API_KEY = "a9badbfcc033516c940caa12ca5705ca"  # Your API key
-EMAIL_ADDRESS = "gregory.mwangi3@gmail.com"   # Your email
-EMAIL_PASSWORD = "gmabsistfpiksqbi"           # Your App password
-
 API_KEY = "Your API key"  # Your API key
 EMAIL_ADDRESS = " Your email"   # Your email
 EMAIL_PASSWORD = "Your App password"           # Your App password
